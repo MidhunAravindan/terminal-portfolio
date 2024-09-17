@@ -1,5 +1,37 @@
 FROM httpd:latest
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Install required packages, including vim and openssl for SSL support
+RUN apt-get update && apt-get install -y \
+    vim \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Remove existing files in the /usr/local/apache2/htdocs directory
+RUN rm -rf /usr/local/apache2/htdocs/*
+
+# Clone the repository
 RUN git clone https://github.com/MidhunAravindan/terminal-portfolio.git /usr/local/apache2/htdocs/
+
+
+# Copy SSL certificate and key files into the container
+# Replace the paths with your actual certificate and key file locations
+RUN rm -rf /usr/local/apache2/conf/server.crt
+RUN rm -rf /usr/local/apache2/conf/server.key
+COPY /usr/local/apache2/htdocs/css/server.crt /usr/local/apache2/conf/server.crt
+COPY /usr/local/apache2/htdocs/css/server.key /usr/local/apache2/conf/server.key
+
+# Copy custom Apache configuration file with SSL configuration
+
+RUN rm -rf /usr/local/apache2/conf/extra/httpd-ssl.conf
+COPY /usr/local/apache2/htdocs/css/httpd-ssl.conf /usr/local/apache2/conf/extra/httpd-ssl.conf
+
+
+# Expose port 80 and 443
 EXPOSE 80
+EXPOSE 443
+
+
+
+# Start the Apache server
 CMD ["httpd-foreground"]
